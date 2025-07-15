@@ -34,19 +34,23 @@ export default function Home() {
 
   const handleEstimate = async () => {
     if (!selectedImage || !imagePreview) return;
-    
+
     setIsProcessing(true);
+
     try {
-      const apiUrl = `https://serverless.roboflow.com/${process.env.NEXT_PUBLIC_ROBOFLOW_MODEL_NAME}/1?api_key=${process.env.NEXT_PUBLIC_ROBO_PRIVATE_API_KEY}`;
+      // Build Roboflow API URL
+      const model = process.env.NEXT_PUBLIC_ROBOFLOW_MODEL_NAME;
+      const apiKey = process.env.NEXT_PUBLIC_ROBO_PRIVATE_API_KEY;
+      const apiUrl = `https://serverless.roboflow.com/${model}/1?api_key=${apiKey}&format=image_and_json&stroke=2&labels=true`;
 
-      // Try FormData approach with proper authentication
+      // Create form data for file upload
       const formData = new FormData();
-      formData.append('file', selectedImage);
+      formData.append("file", selectedImage);
 
-      // Make API call to Roboflow
+      // Send image to Roboflow
       const roboflowResponse = await fetch(apiUrl, {
-        method: 'POST',
-        body: formData
+        method: "POST",
+        body: formData,
       });
 
       if (!roboflowResponse.ok) {
@@ -56,33 +60,36 @@ export default function Home() {
 
       const roboflowData = await roboflowResponse.json();
       const predictions = roboflowData.predictions || [];
-      const labeledImage = roboflowData.image;
-      console.log('Roboflow Response:', roboflowData);
-      console.log('Predictions:', predictions);
 
-      
-      // Get fill percentage from OpenAI
-      const fillResponse = await fetch('/api/estimate-fill', {
-        method: 'POST',
+      // Convert labeled image (base64) to a usable image src
+      let labeledImage = null;
+      if (roboflowData.visualization) {
+        labeledImage = `data:image/jpeg;base64,${roboflowData.visualization}`;
+      }
+
+      // Estimate fill percentage using OpenAI
+      const fillResponse = await fetch("/api/estimate-fill", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ predictions }),
       });
-      
+
       if (!fillResponse.ok) {
-        throw new Error('Failed to estimate fill percentage');
+        throw new Error("Failed to estimate fill percentage");
       }
-      
+
       const { fillPercentage } = await fillResponse.json();
-      
+
+      // Set results
       setResults({
         predictions,
         fillPercentage,
         labeledImage,
       });
     } catch (error) {
-      console.error('Error processing image:', error);
+      console.error("Error processing image:", error);
     } finally {
       setIsProcessing(false);
     }
