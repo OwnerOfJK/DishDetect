@@ -1,103 +1,191 @@
-import Image from "next/image";
+'use client';
+
+import { useState } from 'react';
+import Image from 'next/image';
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [results, setResults] = useState<{
+    predictions: Array<{
+      class: string;
+      confidence: number;
+      bbox: { x: number; y: number; width: number; height: number };
+    }>;
+    fillPercentage: number;
+    labeledImage: string | null;
+  } | null>(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && (file.type === 'image/jpeg' || file.type === 'image/png')) {
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+      setResults(null);
+    }
+  };
+
+
+
+  const handleEstimate = async () => {
+    if (!selectedImage || !imagePreview) return;
+    
+    setIsProcessing(true);
+    try {
+      const apiUrl = `https://serverless.roboflow.com/${process.env.NEXT_PUBLIC_ROBOFLOW_MODEL_NAME}/1?api_key=${process.env.NEXT_PUBLIC_ROBO_PRIVATE_API_KEY}`;
+
+      // Try FormData approach with proper authentication
+      const formData = new FormData();
+      formData.append('file', selectedImage);
+
+      // Make API call to Roboflow
+      const roboflowResponse = await fetch(apiUrl, {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!roboflowResponse.ok) {
+        const errorText = await roboflowResponse.text();
+        throw new Error(`Roboflow API request failed: ${roboflowResponse.status} - ${errorText}`);
+      }
+
+      const roboflowData = await roboflowResponse.json();
+      const predictions = roboflowData.predictions || [];
+      const labeledImage = roboflowData.image;
+      console.log('Roboflow Response:', roboflowData);
+      console.log('Predictions:', predictions);
+
+      
+      // Get fill percentage from OpenAI
+      const fillResponse = await fetch('/api/estimate-fill', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ predictions }),
+      });
+      
+      if (!fillResponse.ok) {
+        throw new Error('Failed to estimate fill percentage');
+      }
+      
+      const { fillPercentage } = await fillResponse.json();
+      
+      setResults({
+        predictions,
+        fillPercentage,
+        labeledImage,
+      });
+    } catch (error) {
+      console.error('Error processing image:', error);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-8 px-4">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">
+          Dishwasher Fill Estimator
+        </h1>
+        
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Upload Dishwasher Image
+            </label>
+            <input
+              type="file"
+              accept="image/jpeg,image/png"
+              onChange={handleImageUpload}
+              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          </div>
+
+          {imagePreview && (
+            <div className="mb-6">
+              <h3 className="text-lg font-medium mb-2">Image Preview:</h3>
+              <div className="relative w-full max-w-md mx-auto">
+                <Image
+                  src={imagePreview}
+                  alt="Uploaded dishwasher"
+                  width={400}
+                  height={300}
+                  className="rounded-lg object-cover"
+                />
+              </div>
+            </div>
+          )}
+
+          {selectedImage && (
+            <div className="text-center">
+              <button
+                onClick={handleEstimate}
+                disabled={isProcessing}
+                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-2 px-6 rounded-lg transition-colors"
+              >
+                {isProcessing ? 'Processing...' : 'Estimate Fill'}
+              </button>
+            </div>
+          )}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        {results && (
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <h2 className="text-2xl font-bold mb-4 text-gray-800">Results</h2>
+            
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="text-lg font-medium mb-2">Labeled Image:</h3>
+                <div className="relative w-full">
+                  <Image
+                    src={results.labeledImage || ''}
+                    alt="Labeled dishwasher image"
+                    width={400}
+                    height={300}
+                    className="rounded-lg object-cover"
+                  />
+                </div>
+              </div>
+              
+              <div className="flex flex-col justify-center">
+                <div className="text-center mb-6">
+                  <h3 className="text-lg font-medium mb-2">Fill Percentage:</h3>
+                  <div className="text-4xl font-bold text-blue-600 mb-2">
+                    {results.fillPercentage}%
+                  </div>
+                  <p className="text-gray-600">
+                    Estimated fill: {results.fillPercentage}
+                  </p>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-medium mb-2">Detected Items:</h3>
+                  <div className="space-y-1 text-sm">
+                    {results.predictions.map((pred, index) => (
+                      <div key={index} className="flex justify-between">
+                        <span>{pred.class}</span>
+                        <span className="text-gray-500">
+                          {(pred.confidence * 100).toFixed(1)}%
+                        </span>
+                      </div>
+                    ))}
+                    {results.predictions.length === 0 && (
+                      <p className="text-gray-500 italic">No items detected</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
