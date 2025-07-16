@@ -48,8 +48,16 @@ export async function POST(request: NextRequest) {
 
     const overallFillPercentage = Math.round((largePercentage * 0.5 + mediumPercentage * 0.3 + smallPercentage * 0.2) * 100) / 100;
 
-    ⚠️ Do not convert items between size categories. They are physically loaded into separate compartments and must be evaluated independently.
-    `;
+    const prompt = `
+      The dishwasher has remaining capacity in three compartments:  
+      - Large: Large plate and large bowl. There are ${MAX_CAPACITY.large - largeCounts} slots left
+      - Medium: Medium plate, medium cup, medium bowl and a tea cup. There are ${MAX_CAPACITY.medium - mediumCounts} slots left
+      - Small: Small plate, small bowl, small cup and a glass. There are ${MAX_CAPACITY.small - smallCounts} slots left
+
+      Based on this, suggest what types of items the user could add before starting a wash.
+
+      Be brief, helpful and respond without any formatting. No more than 50 tokens.
+      `;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -75,14 +83,8 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json();
-    const fillPercentage = parseInt(data.choices[0].message.content.trim());
-    
-    if (isNaN(fillPercentage) || fillPercentage < 0 || fillPercentage > 100) {
-      return NextResponse.json(
-        { error: 'Invalid fill percentage response from OpenAI' },
-        { status: 500 }
-      );
-    }
+    const resultText = data.choices[0].message.content.trim();
+
 
     return NextResponse.json({ fillPercentage });
   } catch (error) {
