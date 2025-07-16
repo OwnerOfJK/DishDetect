@@ -2,6 +2,8 @@
 
 A web application that estimates dishwasher fill percentage using AI-powered object detection and mathematical analysis.
 
+<img width="1289" height="621" alt="Screenshot 2025-07-16 at 14 03 00" src="https://github.com/user-attachments/assets/9517a464-05ce-48ce-a37b-ca194c013317" />
+
 ## Features
 
 - **Image Upload**: Upload JPG or PNG images of loaded dishwashers
