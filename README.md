@@ -1,13 +1,14 @@
 # Dishwasher Fill Estimator
 
-A simple web application that estimates dishwasher fill percentage using AI-powered object detection and analysis.
+A web application that estimates dishwasher fill percentage using AI-powered object detection and mathematical analysis.
 
 ## Features
 
 - **Image Upload**: Upload JPG or PNG images of loaded dishwashers
-- **Object Detection**: Uses Roboflow's `inferencejs` for browser-based dishware detection
-- **Fill Estimation**: OpenAI analyzes detected objects to estimate fill percentage
-- **Visual Results**: Shows labeled images with bounding boxes and fill percentage
+- **Object Detection**: Uses Roboflow API for server-side dishware detection
+- **Fill Estimation**: Mathematical calculation based on detected items with weighted scoring
+- **AI Suggestions**: OpenAI provides recommendations for remaining capacity
+- **Visual Results**: Shows labeled images with bounding boxes, fill percentage, and suggestions
 
 ## Setup
 
@@ -17,16 +18,15 @@ A simple web application that estimates dishwasher fill percentage using AI-powe
    ```
 
 2. **Configure environment variables**:
-   Copy `.env.example` to `.env.local` and fill in your credentials:
+   Create `.env.local` file with your credentials:
    ```bash
-   cp .env.example .env.local
+   # Roboflow Configuration
+   NEXT_PUBLIC_ROBOFLOW_MODEL_NAME=your-model-name
+   NEXT_PUBLIC_ROBO_PRIVATE_API_KEY=your-private-api-key
+   
+   # OpenAI Configuration (for suggestions only)
+   OPENAI_API_KEY=your-openai-api-key
    ```
-
-   Required variables:
-   - `NEXT_PUBLIC_ROBOFLOW_MODEL_NAME`: Your Roboflow model name
-   - `NEXT_PUBLIC_ROBOFLOW_MODEL_VERSION`: Your model version
-   - `NEXT_PUBLIC_ROBOFLOW_PUBLISHABLE_KEY`: Your Roboflow publishable key
-   - `OPENAI_API_KEY`: Your OpenAI API key
 
 3. **Run the development server**:
    ```bash
@@ -37,16 +37,30 @@ A simple web application that estimates dishwasher fill percentage using AI-powe
 
 ## Usage
 
-1. Upload an image of a loaded dishwasher
+1. Upload an image of a loaded dishwasher (JPG or PNG)
 2. Click "Estimate Fill" to run analysis
-3. View results showing detected items and estimated fill percentage
+3. View results showing:
+   - Labeled image with detected items
+   - Fill percentage calculation
+   - List of detected items with confidence scores
+   - AI suggestions for remaining capacity
+
+## Fill Calculation Logic
+
+The app uses mathematical formulas with weighted scoring:
+
+- **Large items** (max 14, weight 50%): l_plate, l_bowl
+- **Medium items** (max 16, weight 30%): m_plate, m_bowl, m_cup, tea_cup
+- **Small items** (max 20, weight 20%): s_plate, s_bowl, s_cup, glass
+
+Final percentage = (Large% × 0.5) + (Medium% × 0.3) + (Small% × 0.2)
 
 ## Tech Stack
 
 - **Frontend**: Next.js 15 with React 19
-- **Styling**: TailwindCSS
-- **Object Detection**: Roboflow's `inferencejs`
-- **AI Analysis**: OpenAI GPT-4o
+- **Styling**: TailwindCSS 4
+- **Object Detection**: Roboflow API
+- **AI Suggestions**: OpenAI GPT-4o
 - **Language**: TypeScript
 
 ## Project Structure
@@ -54,9 +68,10 @@ A simple web application that estimates dishwasher fill percentage using AI-powe
 ```
 src/
 ├── app/
-│   ├── api/estimate-fill/    # OpenAI API integration
-│   ├── utils/roboflow.ts     # Roboflow inference utilities
-│   ├── config.ts             # Configuration settings
-│   ├── page.tsx              # Main application page
-│   └── layout.tsx            # App layout
+│   ├── api/
+│   │   └── estimate-fill/
+│   │       └── route.ts      # Fill calculation and OpenAI suggestions
+│   ├── page.tsx              # Main application UI
+│   ├── layout.tsx            # App layout with fonts
+│   └── globals.css           # Global styles
 ```

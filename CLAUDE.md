@@ -4,13 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a dishwasher fill estimation web application built with Next.js. Users upload photos of loaded dishwashers, and the app uses Roboflow object detection (via `inferencejs`) to detect dishware, then estimates fill percentage using OpenAI's API.
+This is a dishwasher fill estimation web application built with Next.js. Users upload photos of loaded dishwashers, and the app uses Roboflow object detection API to detect dishware items, then calculates fill percentage using mathematical formulas and provides suggestions via OpenAI's API.
 
 ## Key Dependencies
 
 - **Next.js 15.4.1**: Main framework using App Router
 - **React 19.1.0**: UI library
-- **inferencejs 1.0.21**: Browser-based object detection inference
 - **TailwindCSS 4**: Styling framework
 - **TypeScript 5**: Type safety
 
@@ -32,8 +31,11 @@ The project currently has no test framework configured. Check with the user befo
 ```
 src/
 ├── app/
+│   ├── api/
+│   │   └── estimate-fill/
+│   │       └── route.ts   # API route for fill calculation and suggestions
 │   ├── layout.tsx         # Root layout with font configuration
-│   ├── page.tsx           # Main page (currently default Next.js template)
+│   ├── page.tsx           # Main application page with UI
 │   └── globals.css        # Global styles
 ```
 
@@ -41,31 +43,41 @@ src/
 
 The application follows a standard Next.js App Router pattern:
 
-1. **Frontend**: React components in `src/app/` directory
-2. **Object Detection**: Client-side inference using `inferencejs` library
-3. **Fill Estimation**: Server-side API calls to OpenAI (API routes to be implemented)
-4. **Styling**: TailwindCSS with custom font configuration (Geist fonts)
+1. **Frontend**: React components in `src/app/page.tsx` with image upload and results display
+2. **Object Detection**: Server-side Roboflow API calls via fetch
+3. **Fill Estimation**: Mathematical calculation based on detected items with weighted scoring
+4. **Suggestions**: OpenAI API integration for capacity recommendations
+5. **Styling**: TailwindCSS with custom font configuration (Geist fonts)
 
 ## Current State
 
-The project is in initial setup phase with:
-- Basic Next.js scaffold with App Router
-- TailwindCSS configured
-- TypeScript setup with path aliases (`@/*` → `./src/*`)
-- Dependencies installed but core features not yet implemented
+The project is fully functional with:
+- Complete image upload interface with preview
+- Roboflow API integration for object detection
+- Mathematical fill percentage calculation (no longer using OpenAI for math)
+- OpenAI integration for capacity suggestions
+- Results display with labeled images, fill percentage, and suggestions
+- Dark theme UI with responsive layout
 
 ## Implementation Notes
 
-- Use `inferencejs` for browser-based object detection to avoid server costs
-- Implement OpenAI integration via Next.js API routes
-- Follow the workflow: Image Upload → Roboflow Detection → OpenAI Estimation → Display Results
-- The app requires Roboflow model configuration (model name, version, publishable key)
-- OpenAI API will process detection results to estimate fill percentage (0-100)
+### Fill Calculation Logic
+The app uses mathematical formulas instead of AI for fill percentage:
+- **Large items** (max 14): l_plate, l_bowl
+- **Medium items** (max 16): m_plate, m_bowl, m_cup, tea_cup  
+- **Small items** (max 20): s_plate, s_bowl, s_cup, glass
+- **Weighted scoring**: Large (50%), Medium (30%), Small (20%)
 
-## Key Features to Implement
+### API Integration
+- **Roboflow**: Uses server-side API calls with private key
+- **OpenAI**: Only for capacity suggestions, not mathematical calculations
+- **Environment Variables**: Requires NEXT_PUBLIC_ROBOFLOW_MODEL_NAME, NEXT_PUBLIC_ROBO_PRIVATE_API_KEY, OPENAI_API_KEY
 
-1. Image upload interface with preview
-2. Roboflow model integration using Web Workers
-3. OpenAI API integration for fill percentage estimation
-4. Results display with labeled images and percentage
-5. Error handling for API failures and unsupported file types
+### UI Features
+- Dual-panel layout with upload on left, results on right
+- Real-time image preview
+- Processing states and error handling
+- Labeled image display with bounding boxes
+- Detected items list with confidence scores
+- Fill percentage with large display
+- Capacity suggestions from OpenAI
