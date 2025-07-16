@@ -2,15 +2,33 @@
 
 A web application that estimates dishwasher fill percentage using AI-powered object detection and mathematical analysis.
 
+Deployed at: https://vercel.com/jhkallers-projects/dishwash-object-detector
+
 <img width="1289" height="621" alt="Screenshot 2025-07-16 at 14 03 00" src="https://github.com/user-attachments/assets/9517a464-05ce-48ce-a37b-ca194c013317" />
 
 ## Features
 
-- **Image Upload**: Upload JPG or PNG images of loaded dishwashers
-- **Object Detection**: Uses Roboflow API for server-side dishware detection
-- **Fill Estimation**: Mathematical calculation based on detected items with weighted scoring
-- **AI Suggestions**: OpenAI provides recommendations for remaining capacity
-- **Visual Results**: Shows labeled images with bounding boxes, fill percentage, and suggestions
+- **Image Upload**  
+  Upload JPG or PNG images of loaded dishwashers directly from your device.
+
+- **Custom Object Detection**  
+  Runs server-side dishware detection using a fine-tuned **RF-DETR model** trained on a self-annotated dishwasher dataset.  
+  → [View the model on Roboflow](https://universe.roboflow.com/enterrobo/measure-washingmachine)
+
+- **Detection Performance**  
+  Model metrics on validation set:  
+  - **mAP@50**: 80.5%  
+  - **Precision**: 74.1%  
+  - **Recall**: 83.0%
+
+- **Fill Estimation**  
+  Calculates fill rate by categorizing detected items into large, medium, and small compartments and applying a **weighted scoring algorithm**.
+
+- **LLM-Based Suggestions**  
+  Uses OpenAI to analyze detection results and provide **natural language suggestions** for how to best utilize the remaining capacity.
+
+- **Visual Feedback**  
+  Displays uploaded images with bounding boxes, fill percentage, and actionable recommendations.
 
 ## Setup
 
@@ -56,14 +74,6 @@ The app uses mathematical formulas with weighted scoring:
 - **Small items** (max 20, weight 20%): s_plate, s_bowl, s_cup, glass
 
 Final percentage = (Large% × 0.5) + (Medium% × 0.3) + (Small% × 0.2)
-
-## Tech Stack
-
-- **Frontend**: Next.js 15 with React 19
-- **Styling**: TailwindCSS 4
-- **Object Detection**: Roboflow API
-- **AI Suggestions**: OpenAI GPT-4o
-- **Language**: TypeScript
 
 ## Project Structure
 
