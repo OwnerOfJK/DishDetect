@@ -15,6 +15,7 @@ export default function Home() {
     }>;
     fillPercentage: number;
     labeledImage: string | null;
+    suggestion: string;
   } | null>(null);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -78,13 +79,14 @@ export default function Home() {
         throw new Error("Failed to estimate fill percentage");
       }
 
-      const { fillPercentage } = await fillResponse.json();
+      const { fillPercentage, suggestion } = await fillResponse.json();
 
       // Set results
       setResults({
         predictions,
         fillPercentage,
         labeledImage,
+        suggestion,
       });
     } catch (error) {
       console.error("Error processing image:", error);
@@ -181,7 +183,10 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-            </div>
+              <div>
+                <p className="text-gray-300 text-sm">Suggestion: {results.suggestion}</p>
+              </div>
+              </div>
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center text-gray-500">
                 <p className="text-lg text-center">

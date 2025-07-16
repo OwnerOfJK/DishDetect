@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     const resultText = data.choices[0].message.content.trim();
 
 
-    return NextResponse.json({ fillPercentage });
+    return NextResponse.json({ fillPercentage: overallFillPercentage, suggestion: resultText }, { status: 200 });
   } catch (error) {
     console.error('Error estimating fill:', error);
     return NextResponse.json(
