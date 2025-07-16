@@ -30,8 +30,6 @@ export default function Home() {
     }
   };
 
-
-
   const handleEstimate = async () => {
     if (!selectedImage || !imagePreview) return;
 
@@ -96,89 +94,83 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">
+    <div className="h-screen bg-black py-4 px-4">
+      <div className="max-w-7xl mx-auto h-full flex flex-col">
+        <h1 className="text-2xl font-bold text-center mb-4 text-white">
           Dishwasher Fill Estimator
         </h1>
         
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Upload Dishwasher Image
-            </label>
-            <input
-              type="file"
-              accept="image/jpeg,image/png"
-              onChange={handleImageUpload}
-              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-            />
-          </div>
-
-          {imagePreview && (
-            <div className="mb-6">
-              <h3 className="text-lg font-medium mb-2">Image Preview:</h3>
-              <div className="relative w-full max-w-md mx-auto">
-                <Image
-                  src={imagePreview}
-                  alt="Uploaded dishwasher"
-                  width={400}
-                  height={300}
-                  className="rounded-lg object-cover"
-                />
-              </div>
+        <div className="flex gap-4 flex-1 min-h-0">
+          <div className="flex-1 bg-gray-900 rounded-lg shadow-lg p-4 flex flex-col">
+            <div className="mb-3">
+              <label className="block text-lg font-medium text-gray-200 mb-1">
+                Upload Dishwasher Image
+              </label>
+              <input
+                type="file"
+                accept="image/jpeg,image/png"
+                onChange={handleImageUpload}
+                className="block w-full text-sm text-gray-300 file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700"
+              />
             </div>
-          )}
 
-          {selectedImage && (
-            <div className="text-center">
-              <button
-                onClick={handleEstimate}
-                disabled={isProcessing}
-                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-2 px-6 rounded-lg transition-colors"
-              >
-                {isProcessing ? 'Processing...' : 'Estimate Fill'}
-              </button>
-            </div>
-          )}
-        </div>
-
-        {results && (
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h2 className="text-2xl font-bold mb-4 text-gray-800">Results</h2>
-            
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="text-lg font-medium mb-2">Labeled Image:</h3>
-                <div className="relative w-full">
+            {imagePreview && (
+              <div className="mb-3 flex-1">
+                <div className="relative w-full h-full justify-center items-center flex">
                   <Image
-                    src={results.labeledImage || ''}
-                    alt="Labeled dishwasher image"
-                    width={400}
-                    height={300}
+                    src={imagePreview}
+                    alt="Uploaded dishwasher"
+                    width={300}
+                    height={200}
                     className="rounded-lg object-cover"
                   />
                 </div>
               </div>
-              
-              <div className="flex flex-col justify-center">
-                <div className="text-center mb-6">
-                  <h3 className="text-lg font-medium mb-2">Fill Percentage:</h3>
-                  <div className="text-4xl font-bold text-blue-600 mb-2">
+            )}
+
+            {selectedImage && (
+              <div className="text-center mt-auto">
+                <button
+                  onClick={handleEstimate}
+                  disabled={isProcessing}
+                  className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                >
+                  {isProcessing ? 'Processing...' : 'Estimate Fill'}
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="flex-1 bg-gray-900 rounded-lg shadow-lg p-4 flex flex-col">
+            
+            {results ? (
+              <div className="space-y-4">
+                <div className="text-center">
+                  <h3 className="text-base font-medium mb-1 text-white">Fill Percentage:</h3>
+                  <div className="text-3xl font-bold text-blue-400 mb-1">
                     {results.fillPercentage}%
                   </div>
-                  <p className="text-gray-600">
-                    Estimated fill: {results.fillPercentage}
-                  </p>
                 </div>
-                
-                <div>
-                  <h3 className="text-lg font-medium mb-2">Detected Items:</h3>
-                  <div className="space-y-1 text-sm">
+
+              <div className="flex flex-1">
+                <div className="flex-1">
+                  <h3 className="text-base font-medium mb-1 text-white">Labeled Image:</h3>
+                    <Image
+                      src={results.labeledImage || ''}
+                      alt="Labeled dishwasher image"
+                      width={300}
+                      height={200}
+                      className="rounded-lg"
+                    />
+                </div>
+              
+                <div className="w-48">
+                  <h3 className="text-base font-medium mb-1 text-white">Detected Items:</h3>
+                  <div className="space-y-1 text-sm max-h-100 overflow-y-auto bg-gray-800 rounded p-2">
                     {results.predictions.map((pred, index) => (
-                      <div key={index} className="flex justify-between">
-                        <span>{pred.class}</span>
-                        <span className="text-gray-500">
+                      <div key={index} className="flex justify-between text-gray-300">
+                        <span className="truncate">{pred.class}</span>
+                        <span className="text-gray-500 ml-2">
                           {(pred.confidence * 100).toFixed(1)}%
                         </span>
                       </div>
@@ -190,8 +182,29 @@ export default function Home() {
                 </div>
               </div>
             </div>
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center text-gray-500">
+                <p className="text-lg text-center">
+                  Upload an image and click `Estimate Fill` to see results
+                </p>
+                <div className="mt-8 space-y-2 text-sm text-gray-600">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-blue-400 rounded-full"></div>
+                    <span>Labeled image will appear here</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-blue-400 rounded-full"></div>
+                    <span>Fill percentage calculation</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-blue-400 rounded-full"></div>
+                    <span>Detected dishware items</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
