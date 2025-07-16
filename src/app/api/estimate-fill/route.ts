@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+const MAX_CAPACITY = {
+  large: 14,
+  medium: 16,
+  small: 20
+};
+
 export async function POST(request: NextRequest) {
   try {
-    const { predictions }: { predictions: Array<{ class: string; confidence: number }> } = await request.json();
-    
+
     if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json(
         { error: 'OpenAI API key not configured' },
@@ -11,27 +16,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const prompt = `
-    You are given the following prediction output listing dishes inside a dishwasher.
+    const { predictions }: { predictions: Array<{ class: string; confidence: number }> } = await request.json();
 
-    Detected items:
-    ${predictions.map((pred) => `- ${pred.class} (confidence: ${(pred.confidence * 100).toFixed(1)}%)`).join('\n')}
+    const largeItems = ['l_plate', 'l_bowl'];
+    const mediumItems = ['m_plate', 'm_bowl', 'm_cup', 'tea_cup'];
+    const smallItems = ['s_plate', 's_bowl', 's_cup', 'glass'];
 
-    Your task is to estimate the fill percentage of the dishwasher based on the number and type of detected dishes.
+    const maxCapacity = {
+      large: MAX_CAPACITY.large,
+      medium: MAX_CAPACITY.medium,
+      small: MAX_CAPACITY.small
+    };
 
-    💡 The dishwasher has three separate compartments: one for large items, one for medium items, and one for small items. Each compartment has its own maximum capacity, and must be evaluated separately.
+    let largeCounts = 0;
+    let mediumCounts = 0;
+    let smallCounts = 0;
 
-    **Dish categories:**
-    - Large items (max 14): l_plate, l_bowl
-    - Medium items (max 16): m_plate, m_bowl, m_cup
-    - Small items (max 20): s_plate, s_bowl, s_cup, tea_cup, glass
+    predictions.forEach(pred => {
+      if (largeItems.includes(pred.class)) {
+        largeCounts++;
+      } else if (mediumItems.includes(pred.class)) {
+        mediumCounts++;
+      } else if (smallItems.includes(pred.class)) {
+        smallCounts++;
+      }
+    });
 
-    **Instructions:**
-    1. From the JSON, count how many items of each category were detected.
-    2. Compute the fill percentage for each category as: "fill = (detected items / max capacity) * 100"
-    3. Compute the **overall fill percentage** by averaging the three fill percentages.
-      - If a category has **zero detected items**, count it as "0%" filled.
-    4. Output **only the final overall fill percentage**, rounded to two decimal places. Do not return any explanation or intermediate steps.
+    const largePercentage = (largeCounts / maxCapacity.large) * 100;
+    const mediumPercentage = (mediumCounts / maxCapacity.medium) * 100;
+    const smallPercentage = (smallCounts / maxCapacity.small) * 100;
+
+    const overallFillPercentage = Math.round((largePercentage * 0.5 + mediumPercentage * 0.3 + smallPercentage * 0.2) * 100) / 100;
 
     ⚠️ Do not convert items between size categories. They are physically loaded into separate compartments and must be evaluated independently.
     `;
