@@ -1,6 +1,6 @@
 # Dishwasher Fill Estimator
 
-A web application that estimates dishwasher fill percentage using AI-powered object detection and mathematical analysis.
+A web application that estimates dishwasher fill percentage using a fine-tuned RF-DETR model for object detection with an LLM integration.
 
 Deployed at: https://vercel.com/jhkallers-projects/dishwash-object-detector
 
