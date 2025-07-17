@@ -1,4 +1,4 @@
-# Dishwasher Fill Estimator
+# DishDetect
 
 A web application that estimates dishwasher fill percentage using a fine-tuned RF-DETR model for object detection with an LLM integration.
 
