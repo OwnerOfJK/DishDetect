@@ -13,7 +13,7 @@ Deployed at: https://vercel.com/jhkallers-projects/dishwash-object-detector
 
 - **Custom Object Detection**  
   Runs server-side dishware detection using a fine-tuned **RF-DETR model** trained on a self-annotated dishwasher dataset.  
-  → [View the model on Roboflow](https://universe.roboflow.com/enterrobo/measure-washingmachine)
+  → View the model on Roboflow: https://universe.roboflow.com/enterrobo/measure-washingmachine
 
 - **Detection Performance**  
   Model metrics on validation set:  
